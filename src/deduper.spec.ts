@@ -19,11 +19,18 @@ describe("Deduper", () => {
     const fakeStorage = {
       async load() {
         return {
-          "1": "some_hash_here",
+          1: "an_old_fake_hash",
         };
       },
     };
     const deduper = new Deduper(fakeStorage as any);
+    await deduper.load();
+
+    //@ts-ignore
+    deduper.getTimestamp = () => "fake_timestamp";
+
+    //@ts-ignore
+    deduper.hash = () => "fake_hash";
 
     const changes = await deduper.findChanges([
       { id: 1, foo: "bar" },
@@ -32,15 +39,18 @@ describe("Deduper", () => {
 
     const created = [
       {
-        id: 2,
-        hash: expect.any(String),
+        id: "2.fake_timestamp",
+        _id: 2,
+        _hash: "fake_hash",
       },
     ];
 
     const updated = [
       {
-        id: 1,
-        hash: expect.any(String),
+        id: "1.fake_timestamp",
+        foo: "bar",
+        _id: 1,
+        _hash: "fake_hash",
       },
     ];
 
@@ -49,22 +59,6 @@ describe("Deduper", () => {
       created,
       updated,
     });
-  });
-
-  it("should not reload the cache if it's already populated", async () => {
-    const fakeStorage = {
-      load: jest.fn().mockImplementation(() => []),
-    };
-    const deduper = new Deduper(fakeStorage as any);
-
-    //@ts-ignore
-    deduper.cache = new Map();
-    await deduper.findChanges([]);
-    expect(fakeStorage.load).not.toHaveBeenCalled();
-
-    // Force reload cache
-    await deduper.findChanges([], true);
-    expect(fakeStorage.load).toHaveBeenCalledTimes(1);
   });
 
   it("should persist changes", async () => {
@@ -90,6 +84,23 @@ describe("Deduper", () => {
     expect(fakeStorage.save).toHaveBeenCalledWith({
       item1: "5LkFSjD3MWK7bOMeo1f5xg==",
       item2: "OWD/UUTp9eoycPHl+01Q3Q==",
+    });
+  });
+
+  it("should initialize the deduper", async () => {
+    const fakeStorage = {
+      save: jest.fn(),
+    };
+    const deduper = new Deduper(fakeStorage as any);
+    await deduper.initialize([
+      {
+        id: "item1",
+        name: "foo",
+      },
+    ]);
+
+    expect(fakeStorage.save).toHaveBeenCalledWith({
+      item1: "5LkFSjD3MWK7bOMeo1f5xg==",
     });
   });
 });

@@ -6,7 +6,7 @@ import { Storage } from "./storage";
 export class Deduper {
   private storage: Storage;
   private changes?: DeduperChanges;
-  private cache?: Records;
+  private cache: Records = {};
 
   constructor(storage: Storage) {
     this.storage = storage;
@@ -23,25 +23,25 @@ export class Deduper {
     return true;
   }
 
+  public async load() {
+    this.cache = await this.storage.load();
+    return true;
+  }
+
   /**
    * Find changes
    *
    * Compares the current records with the cached record hashes to find
    * which records are new and which are updated.
    */
-  public async findChanges(
-    currentRecords: PollRecord[],
-    forceReload?: boolean,
-  ): Promise<DeduperChanges> {
-    if (_.isUndefined(this.cache) || forceReload) {
-      this.cache = await this.storage.load();
-    }
-
+  public findChanges(currentRecords: PollRecord[]): DeduperChanges {
     const changes: DeduperChanges = {
       created: [],
       updated: [],
       all: [],
     };
+
+    const timestamp = this.getTimestamp();
 
     for (const record of currentRecords) {
       const recordHash = this.hash(record);
@@ -51,15 +51,19 @@ export class Deduper {
         if (recordHash !== cachedRecordHash) {
           // This is an updated record
           changes.updated.push({
-            id: record.id,
-            hash: recordHash,
+            ...record,
+            id: `${record.id}.${timestamp}`,
+            _id: record.id,
+            _hash: recordHash,
           });
         }
       } else {
         // This is a new record
         changes.created.push({
-          id: record.id,
-          hash: recordHash,
+          ...record,
+          id: `${record.id}.${timestamp}`,
+          _id: record.id,
+          _hash: recordHash,
         });
       }
     }
@@ -70,6 +74,10 @@ export class Deduper {
     this.changes = changes;
 
     return this.changes;
+  }
+
+  private getTimestamp() {
+    return new Date().getTime();
   }
 
   /**
