@@ -75,11 +75,21 @@ describe("Deduper", () => {
 
     //@ts-ignore
     deduper.cache = {
-      foo: "bar",
+      item1: "YtgnKwYsbpXJZwGO2ZUBQQ==",
     };
-    await deduper.persistChanges({});
+    await deduper.persistChanges([
+      {
+        id: "item1",
+        name: "foo",
+      },
+      {
+        id: "item2",
+        name: "bar",
+      },
+    ]);
     expect(fakeStorage.save).toHaveBeenCalledWith({
-      foo: "bar",
+      item1: "5LkFSjD3MWK7bOMeo1f5xg==",
+      item2: "OWD/UUTp9eoycPHl+01Q3Q==",
     });
   });
 });
