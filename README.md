@@ -1,3 +1,17 @@
 # Custom Zapier Deduper
 
-This library provides some helper utilities for the development of Zapier polling triggers.
+This library will help you build a Custom Zapier deduper for advanced polling triggers use cases.
+
+## Installation
+
+```shell
+$ yarn add z-deduper
+```
+
+## Usage
+
+TODO: Add information about usage
+
+## License
+
+MIT
