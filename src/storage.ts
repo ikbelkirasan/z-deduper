@@ -49,7 +49,7 @@ export class Storage {
       contents = Buffer.from(contents, "base64").toString();
       const records = JSON.parse(contents);
       return records;
-    } catch (error) {
+    } catch (error:any) {
       error.message =
         "Deduper cache seems to be corrupted\nReason: " + error.message;
       throw error;
